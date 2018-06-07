@@ -19,68 +19,87 @@ namespace BillingWebJob.Helpers
     {
         private AuthenticationHelperForPartnerOperation authHelper = new AuthenticationHelperForPartnerOperation();
 
-        public IList<AzureUtilizationRecord> MapUtilizationToCustomClass(List<Microsoft.Store.PartnerCenter.Models.Utilizations.AzureUtilizationRecord> listFromSDK)
+        public IList<AzureUtilizationRecord> MapUtilizationToCustomClass(List<CustomObject> listFromSDK)
         {
             IList<AzureUtilizationRecord> customList = new List<AzureUtilizationRecord>();
             foreach (var objFromSDK in listFromSDK)
             {
-                AzureUtilizationRecord objCustom = new AzureUtilizationRecord();
-                objCustom.UsageStartTime = objFromSDK.UsageStartTime.LocalDateTime;
-                objCustom.UsageEndTime = objFromSDK.UsageEndTime.LocalDateTime;
-                objCustom.Unit = objFromSDK.Unit;
-                objCustom.Quantity = (double)objFromSDK.Quantity;
-                objCustom.InfoFields = objFromSDK.InfoFields;
+                foreach (var record in objFromSDK.ResourceUtilizationList)
+                {
+                    AzureUtilizationRecord objCustom = new AzureUtilizationRecord();
+                    objCustom.CustomerCompanyName = objFromSDK.CustomerCompanyName;
+                    objCustom.UsageStartTime = record.UsageStartTime.LocalDateTime;
+                    objCustom.UsageEndTime = record.UsageEndTime.LocalDateTime;
+                    objCustom.Unit = record.Unit;
+                    objCustom.Quantity = (double)record.Quantity;
+                    objCustom.InfoFields = record.InfoFields;
 
-                AzureInstanceData objCustomInstanceData = new AzureInstanceData();
-                AzureResource objCustomResouceData = new AzureResource();
-                Models.ResourceAttributes objCustomResouceAttributes = new Models.ResourceAttributes();
+                    AzureInstanceData objCustomInstanceData = new AzureInstanceData();
+                    AzureResource objCustomResouceData = new AzureResource();
+                    Models.ResourceAttributes objCustomResouceAttributes = new Models.ResourceAttributes();
 
-                objCustomInstanceData.Location = objFromSDK.InstanceData.Location;
-                objCustomInstanceData.OrderNumber = objFromSDK.InstanceData.OrderNumber;
-                objCustomInstanceData.PartNumber = objFromSDK.InstanceData.PartNumber;
-                objCustomInstanceData.ResourceUri = objFromSDK.InstanceData.ResourceUri.OriginalString;
-                objCustomInstanceData.Tags = objFromSDK.InstanceData.Tags;
+                    try
+                    {
+                        objCustomInstanceData.Location = record.InstanceData.Location;
+                        objCustomInstanceData.OrderNumber = record.InstanceData.OrderNumber;
+                        objCustomInstanceData.PartNumber = record.InstanceData.PartNumber;
+                        objCustomInstanceData.ResourceUri = record.InstanceData.ResourceUri.OriginalString;
+                        objCustomInstanceData.Tags = record.InstanceData.Tags;
+                    }
+                    catch { }
 
-                objCustom.InstanceData = objCustomInstanceData;
+                    objCustom.InstanceData = objCustomInstanceData;
 
-                objCustomResouceData.Category = objFromSDK.Resource.Category;
-                objCustomResouceData.Id = objFromSDK.Resource.Id;
-                objCustomResouceData.Name = objFromSDK.Resource.Name;
-                objCustomResouceData.Subcategory = objFromSDK.Resource.Subcategory;
+                    objCustomResouceData.Category = record.Resource.Category;
+                    objCustomResouceData.Id = record.Resource.Id;
+                    objCustomResouceData.Name = record.Resource.Name;
+                    objCustomResouceData.Subcategory = record.Resource.Subcategory;
 
-                objCustom.Resource = objCustomResouceData;
+                    objCustom.Resource = objCustomResouceData;
 
-                objCustomResouceAttributes.Etag = objFromSDK.Attributes.Etag;
+                    objCustomResouceAttributes.Etag = record.Attributes.Etag;
 
-                objCustom.Attributes = objCustomResouceAttributes;
+                    objCustom.Attributes = objCustomResouceAttributes;
 
-                customList.Add(objCustom);
+                    customList.Add(objCustom);
+                }
             }
             return customList;
         }
 
+        public class CustomObject
+        {
+            public string CustomerCompanyName { get; set; }
+            public List<Microsoft.Store.PartnerCenter.Models.Utilizations.AzureUtilizationRecord> ResourceUtilizationList { get; set; }
+        }
+
         public IList<AzureUtilizationRecord> doTheTask()
         {
-            List<Microsoft.Store.PartnerCenter.Models.Utilizations.AzureUtilizationRecord> ResourceUtilizationList = new List<Microsoft.Store.PartnerCenter.Models.Utilizations.AzureUtilizationRecord>();
+            List<CustomObject> ResourceUtilizationList = new List<CustomObject>();
             var partnerOperations = this.authHelper.AppPartnerOperations;
-            //try
-            //{
-            //    SeekBasedResourceCollection<Customer> customersPage = partnerOperations.Customers.Get();
-            //    List<Customer> customers = customersPage.Items.ToList();
-            //    Parallel.ForEach(customers, customer =>
-            //    {
-            //        ResourceUtilizationList.AddRange(GetDataPerCustomer(customer, partnerOperations));
-            //    });
+            try
+            {
+                SeekBasedResourceCollection<Customer> customersPage = partnerOperations.Customers.Get();
+                List<Customer> customers = customersPage.Items.ToList();
+                Parallel.ForEach(customers, customer =>
+                {
+                    CustomObject obj = new CustomObject
+                    {
+                        CustomerCompanyName = customer.CompanyProfile.CompanyName,
+                        ResourceUtilizationList = GetDataPerCustomer(customer, partnerOperations)
+                    };
+                    ResourceUtilizationList.Add(obj);
+                });
 
-            //}
-            //catch (Exception ex)
-            //{
-            //    Console.WriteLine(ex.Message);
-            //}
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
             //string output = JsonConvert.SerializeObject(ResourceUtilizationList);
             //System.IO.File.WriteAllText(@".\ResourceUtilizationList.json", output);
-            string json = System.IO.File.ReadAllText(@".\ResourceUtilizationList.json");
-            ResourceUtilizationList = JsonConvert.DeserializeObject<List<Microsoft.Store.PartnerCenter.Models.Utilizations.AzureUtilizationRecord>>(json);
+            //string json = System.IO.File.ReadAllText(@".\ResourceUtilizationList.json");
+            //ResourceUtilizationList = JsonConvert.DeserializeObject<List<Microsoft.Store.PartnerCenter.Models.Utilizations.AzureUtilizationRecord>>(json);
 
             return MapUtilizationToCustomClass(ResourceUtilizationList);
         }

@@ -15,4 +15,5 @@ CREATE TABLE [dbo].[CspUtilizationData](
 	[InstanceDataOrderNumber] [nvarchar](1024) NULL,
 	[InstanceDataTags] [nvarchar](1024) NULL,
 	[Attributes] [nvarchar](1024) NULL,
+	[CustomerCompanyName] [nvarchar](1024) NULL,
 	)

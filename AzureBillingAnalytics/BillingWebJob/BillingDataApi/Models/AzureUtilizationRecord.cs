@@ -21,7 +21,7 @@ namespace BillingWebJob.Models
         /// <summary>
         /// Initializes a new instance of the AzureUtilizationRecord class.
         /// </summary>
-        public AzureUtilizationRecord(DateTime? usageStartTime = default(DateTime?), DateTime? usageEndTime = default(DateTime?), AzureResource resource = default(AzureResource), double? quantity = default(double?), string unit = default(string), IDictionary<string, string> infoFields = default(IDictionary<string, string>), AzureInstanceData instanceData = default(AzureInstanceData), ResourceAttributes attributes = default(ResourceAttributes))
+        public AzureUtilizationRecord(DateTime? usageStartTime = default(DateTime?), DateTime? usageEndTime = default(DateTime?), AzureResource resource = default(AzureResource), double? quantity = default(double?), string unit = default(string), IDictionary<string, string> infoFields = default(IDictionary<string, string>), AzureInstanceData instanceData = default(AzureInstanceData), ResourceAttributes attributes = default(ResourceAttributes), string customerCompanyName = default(string))
         {
             UsageStartTime = usageStartTime;
             UsageEndTime = usageEndTime;
@@ -31,6 +31,7 @@ namespace BillingWebJob.Models
             InfoFields = infoFields;
             InstanceData = instanceData;
             Attributes = attributes;
+            CustomerCompanyName = customerCompanyName;
         }
 
         /// <summary>
@@ -73,5 +74,9 @@ namespace BillingWebJob.Models
         [JsonProperty(PropertyName = "Attributes")]
         public ResourceAttributes Attributes { get; set; }
 
+        /// <summary>
+        /// </summary>
+        [JsonProperty(PropertyName = "CustomerCompanyName")]
+        public object CustomerCompanyName { get; set; }
     }
 }

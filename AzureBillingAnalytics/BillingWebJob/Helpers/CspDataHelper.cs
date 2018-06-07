@@ -660,7 +660,7 @@ namespace BillingWebJob.Helpers
 
             Console.WriteLine("Successfully wrote data to the Utlization Table");
         }
-
+        
         internal static int UpdateCurrentUtilizationRecordsInDb(IList<AzureUtilizationRecord> cspUtilizationRecordsFromApi)
         {
 
@@ -681,6 +681,7 @@ namespace BillingWebJob.Helpers
             dataTable.Columns.Add("InstanceDataOrderNumber", typeof(string));
             dataTable.Columns.Add("InstanceDatatags", typeof(string));
             dataTable.Columns.Add("Attributes", typeof(string));
+            dataTable.Columns.Add("CustomerCompanyName", typeof(string));
             Console.WriteLine("\nAll Usage data which exist in DB will be deleted and replaced by new line items.");
             
             using (AzureAnalyticsDbModel dbContext = new AzureAnalyticsDbModel())
@@ -699,7 +700,7 @@ namespace BillingWebJob.Helpers
                 {
                     var arg1 = utilizationRecord.InfoFields.Count == 0 || utilizationRecord.InfoFields == null ? "" : String.Join(",", utilizationRecord.InfoFields.ToArray());
                     var arg2 = utilizationRecord.InstanceData.Tags == null || utilizationRecord.InstanceData.Tags.Count == 0 ? "" : String.Join("/,", utilizationRecord.InstanceData.Tags.ToArray());
-                    dataTable.Rows.Add(0, (DateTime?)utilizationRecord.UsageStartTime.Value, (DateTime?)utilizationRecord.UsageEndTime.Value, utilizationRecord.Resource.Id, utilizationRecord.Resource.Name, utilizationRecord.Resource.Category, utilizationRecord.Resource.Subcategory, utilizationRecord.Quantity, utilizationRecord.Unit, arg1, utilizationRecord.InstanceData.ResourceUri, utilizationRecord.InstanceData.Location, utilizationRecord.InstanceData.OrderNumber, utilizationRecord.InstanceData.PartNumber, arg2, utilizationRecord.Attributes.Etag);
+                    dataTable.Rows.Add(0, (DateTime?)utilizationRecord.UsageStartTime.Value, (DateTime?)utilizationRecord.UsageEndTime.Value, utilizationRecord.Resource.Id, utilizationRecord.Resource.Name, utilizationRecord.Resource.Category, utilizationRecord.Resource.Subcategory, utilizationRecord.Quantity, utilizationRecord.Unit, arg1, utilizationRecord.InstanceData.ResourceUri, utilizationRecord.InstanceData.Location, utilizationRecord.InstanceData.OrderNumber, utilizationRecord.InstanceData.PartNumber, arg2, utilizationRecord.Attributes.Etag, utilizationRecord.CustomerCompanyName);
 
                 }
 
@@ -722,6 +723,7 @@ namespace BillingWebJob.Helpers
                     bulkCopy.ColumnMappings.Add("InstanceDataOrderNumber", "InstanceDataOrderNumber");
                     bulkCopy.ColumnMappings.Add("InstanceDataTags", "InstanceDataTags");
                     bulkCopy.ColumnMappings.Add("Attributes", "Attributes");
+                    bulkCopy.ColumnMappings.Add("CustomerCompanyName", "CustomerCompanyName");
 
                     bulkCopy.BatchSize = 10000;
                     bulkCopy.BulkCopyTimeout = 600;
